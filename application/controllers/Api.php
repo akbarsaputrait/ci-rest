@@ -13,19 +13,21 @@ class Api extends Rest
     }
 
     /* index page */
-    public function task_get($id = '')
+    public function task_get($token = '')
     {
         header('Content-Type: application/json'); 
-        $get_id = 'user_id';
-        if ($id == '') {
+        if ($token == '') {
             // baseurl/?table=nama_table (semua data)
+            $this->db->select('user_id, task, status');
             $data = $this->db->get('task')->result();
+            echo json_encode(array('data' => $data, 'success' => true));
         } else {
             // baseurl/?table=nama_table&id=id (satu data)
-            $this->db->where($get_id, $id);
+            $this->db->where('token', $token);
+            $this->db->select('user_id, task, status');
             $data = $this->db->get('task')->result();
+            echo json_encode(array('data' => $data, 'success' => true));
         }
-        echo json_encode(array('data' => $data, 'success' => true));
         //$this->response(array("data" => $data,'status'=>'success',), 200);
     }
 
@@ -47,17 +49,16 @@ class Api extends Rest
         }
     }
 
-    public function task_put($id = '')
+    public function task_put($token = '')
     { // baseurl/nama_table/id
         header('Content-Type: application/json'); 
-        $get_id = 'user_id';
-        $this->db->where($get_id, $id);
+        $this->db->where('token', $token);
         $update = $this->db->update('task', $this->put());
         if ($update) {
             $response = array(
                 'data' => $this->put(),
                 'table' => 'task',
-                'id' => $id,
+                'id' => $token,
                 'status' => 'success',
             );
             echo json_encode(array('data' => $response, 'success' => true));
@@ -66,16 +67,15 @@ class Api extends Rest
         }
     }
 
-    public function task_delete($id = '')
+    public function task_delete($token = '')
     {
         header('Content-Type: application/json'); 
-        $get_id = 'user_id';
-        $this->db->where($get_id, $id);
+        $this->db->where($token, $token);
         $delete = $this->db->delete('task');
         if ($delete) {
             $response = array(
                 'table' => 'task',
-                'id' => $id,
+                'id' => $token,
                 'status' => 'success',
             );
             echo json_encode(array('data' => $response, 'success' => true));

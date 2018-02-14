@@ -12,11 +12,12 @@ class Rest extends REST_Controller {
     public function __construct(){
         parent::__construct();
         $this->load->library('form_validation');
+        $this->load->database();
     }
 
     // method untuk melihat token pada user
     public function generate_post(){
-
+        header('Content-Type: application/json'); 
         $this->load->model('loginmodel');
         $username = $this->post('username',TRUE);
         $pass = $this->post('password',TRUE);
@@ -33,40 +34,36 @@ class Rest extends REST_Controller {
                 $payload['date'] = date('Y-m-d H:i:s'); //waktu di buat
                 $output['token'] = JWT::encode($payload,$this->secretkey);
                 // return $this->response($output,REST_Controller::HTTP_OK);
-                echo json_encode(array('data' => $output, 'success' => true));
+                echo json_encode(array('data' => $payload, 'token' => $output, 'success' => true));
+                $this->db
+                ->set('token', $output['token'])
+                ->where('id', $data->id)
+                ->update('client');
             } else {
-                $this->viewtokenfail($username);
+                echo json_encode(array('error' => true));
             }
-        } else {
-            $this->viewtokenfail($username);
-        }
-    }
 
-    // method untuk jika generate token diatas salah
-    public function viewtokenfail($username){
-        $this->response([
-          'status'=>'0',
-          'username'=>$username,
-          'message'=>'Invalid Username Or Password'
-          ],REST_Controller::HTTP_BAD_REQUEST);
+        } else {
+            echo json_encode(array('error' => true));
+        }
     }
 
     // method untuk mengecek token setiap melakukan post, put, etc
     public function cektoken(){
+        header('Content-Type: application/json'); 
 
         $this->load->model('loginmodel');
 
         $jwt = $this->input->get_request_header('Authorization');
 
-        try {
-            $decode = JWT::decode($jwt,$this->secretkey,array('HS256'));
+       if($decode = JWT::decode($jwt,$this->secretkey,array('HS256'))){
 
-            if ($this->loginmodel->is_valid_num($decode->username)>0) {
+            if ($this->loginmodel->is_valid_num($decode->username) > 0) {
                 return true;
             }
 
-        } catch (Exception $e) {
-            exit(json_encode(array('status' => '0' ,'message' => 'Invalid Token',)));
+        } else {
+            echo json_encode(array('status' => '0' ,'message' => 'Invalid Token',));
         }
     }
 
